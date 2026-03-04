@@ -1,0 +1,2848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlogBot — AI Content Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a33;
+    --accent: #c8f04a;
+    --accent-dim: #8aaa2a;
+    --text: #e8e8f0;
+    --text-muted: #7a7a8a;
+    --danger: #ff5f5f;
+    --success: #4af0a0;
+    --warn: #f0c94a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--text-muted); font-style: italic; font-size: 14px; margin-left: 8px; }
+
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 16px 32px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    font-size: 10px;
+    margin-left: 6px;
+    font-weight: 700;
+  }
+
+  /* LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px;
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .stat-card .val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-card .lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .competitor-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .competitor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .competitor-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* CONTENT AREA */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+  }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* SETUP PANEL */
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 900px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .card .desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="password"] { letter-spacing: 0.1em; }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .tag-input-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-height: 42px;
+    cursor: text;
+    transition: border-color 0.2s;
+  }
+
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+  }
+
+  .tag .rm {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .tag .rm:hover { color: var(--danger); }
+
+  .tag-input-wrap input {
+    border: none;
+    background: transparent;
+    padding: 2px 4px;
+    flex: 1;
+    min-width: 120px;
+    font-size: 12px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: 'Instrument Sans', sans-serif;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .btn-primary:hover { background: #d4f860; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-lg { padding: 14px 28px; font-size: 15px; }
+
+  /* TOPIC CARDS */
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .topic-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .topic-card:hover { border-color: var(--accent-dim); transform: translateY(-2px); }
+  .topic-card.selected { border-color: var(--accent); background: #1a1f0f; }
+
+  .topic-card .sel-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+  }
+
+  .topic-card.selected .sel-badge { display: flex; }
+
+  .topic-card .title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    margin-bottom: 10px;
+    line-height: 1.3;
+    padding-right: 30px;
+  }
+
+  .topic-card .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .chip {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    border: 1px solid;
+  }
+
+  .chip-green { border-color: var(--accent-dim); color: var(--accent); background: #1a200a; }
+  .chip-blue { border-color: #3a5a8a; color: #7ab0f0; background: #0d1a2a; }
+  .chip-orange { border-color: #7a4a1a; color: #f0a04a; background: #1a0f05; }
+
+  .topic-card .rationale {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* OUTLINE */
+  .outline-section {
+    max-width: 750px;
+  }
+
+  .outline-header {
+    margin-bottom: 24px;
+  }
+
+  .outline-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    margin-bottom: 8px;
+  }
+
+  .kw-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .outline-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .outline-block-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .outline-level {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .outline-block-header input {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    padding: 0;
+    font-family: 'Instrument Sans', sans-serif;
+  }
+
+  .outline-block-body {
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .outline-block-body ul { padding-left: 18px; }
+  .outline-block-body li { margin-bottom: 4px; }
+
+  .img-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ARTICLE EDITOR */
+  .article-wrap {
+    max-width: 800px;
+  }
+
+  .article-meta-bar {
+    display: flex;
+    gap: 20px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-size: 12px;
+  }
+
+  .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .meta-item .mk { color: var(--text-muted); font-size: 11px; }
+  .meta-item .mv { font-family: 'DM Mono', monospace; color: var(--accent); }
+
+  .article-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .article-body-inner {
+    padding: 32px 40px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .article-body-inner h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    line-height: 1.2;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  .article-body-inner h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    margin: 32px 0 12px;
+    color: var(--text);
+  }
+
+  .article-body-inner h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 24px 0 8px;
+    color: var(--text);
+  }
+
+  .article-body-inner p { margin-bottom: 16px; }
+
+  .article-body-inner ul, .article-body-inner ol {
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+
+  .article-body-inner li { margin-bottom: 6px; }
+
+  .inline-img {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .inline-img .img-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .inline-img .img-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .inline-img .img-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .img-generated { border-color: var(--accent-dim); background: #12180a; }
+  .img-generated .img-icon { filter: saturate(1.5); }
+
+  .seo-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 24px;
+  }
+
+  .seo-box h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .seo-preview {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    color: #000;
+    font-family: Arial, sans-serif;
+    margin-bottom: 14px;
+  }
+
+  .seo-preview .sp-url { font-size: 12px; color: #006621; margin-bottom: 4px; }
+  .seo-preview .sp-title { font-size: 18px; color: #1a0dab; margin-bottom: 4px; cursor: pointer; }
+  .seo-preview .sp-title:hover { text-decoration: underline; }
+  .seo-preview .sp-desc { font-size: 13px; color: #545454; line-height: 1.4; }
+
+  /* HISTORY */
+  .history-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .history-item:hover { border-color: var(--accent-dim); }
+
+  .history-item .hi-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-published { background: var(--success); }
+  .status-draft { background: var(--warn); }
+
+  .history-item .hi-title {
+    flex: 1;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .history-item .hi-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* STREAM */
+  .stream-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    height: 120px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+
+  .stream-line { padding: 2px 0; }
+  .stream-line.ok { color: var(--success); }
+  .stream-line.err { color: var(--danger); }
+  .stream-line.info { color: var(--accent); }
+
+  /* LOADING */
+  .loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* PROGRESS STEPS */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  }
+
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid var(--border);
+    color: var(--text-muted);
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .step.done .step-num { border-color: var(--accent); background: var(--accent); color: #000; }
+  .step.active .step-num { border-color: var(--accent); color: var(--accent); }
+
+  .step-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .step.active .step-label { color: var(--text); }
+  .step.done .step-label { color: var(--accent-dim); }
+
+  .step-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 8px;
+    min-width: 30px;
+  }
+
+  .step-line.done { background: var(--accent-dim); }
+
+  /* TOGGLE */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-info .ti { font-size: 13px; font-weight: 500; }
+  .toggle-info .td { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .toggle {
+    width: 40px;
+    height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s;
+    flex-shrink: 0;
+  }
+
+  .toggle.on { background: var(--accent); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: left 0.25s;
+  }
+
+  .toggle.on::after { left: 21px; }
+
+  /* NOTIFICATION */
+  .notif {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 320px;
+  }
+
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif.success { border-color: var(--success); }
+  .notif.error { border-color: var(--danger); }
+
+  /* DIVIDER */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .section-title h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    white-space: nowrap;
+  }
+
+  .section-title .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* PUBLISH BOX */
+  .publish-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+
+  .publish-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .pub-opt {
+    padding: 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .pub-opt:hover, .pub-opt.selected { border-color: var(--accent); background: #1a1f0f; }
+  .pub-opt .po-icon { font-size: 24px; margin-bottom: 8px; }
+  .pub-opt .po-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .pub-opt .po-desc { font-size: 12px; color: var(--text-muted); }
+
+  /* UTILS */
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .color-success { color: var(--success); }
+  .color-warn { color: var(--warn); }
+  .color-accent { color: var(--accent); }
+  .color-muted { color: var(--text-muted); }
+  .mono { font-family: 'DM Mono', monospace; }
+  .text-sm { font-size: 12px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state .es-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; max-width: 400px; margin: 0 auto 24px; }
+
+  select option { background: #1e1e24; }
+
+  /* FEISHU SYNC */
+  .feishu-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 16px;
+  }
+  .feishu-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .feishu-dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .feishu-dot.syncing { background: var(--warn); animation: pulse 1s infinite; }
+  .feishu-dot.error { background: var(--danger); }
+
+  /* SCHEDULER */
+  .scheduler-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .scheduler-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .scheduler-card .desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .countdown-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    margin-top: 14px;
+  }
+  .countdown-box .cd-val {
+    font-size: 18px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--accent);
+    min-width: 100px;
+  }
+  .run-log {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    max-height: 180px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+  .run-log-line { padding: 2px 0; border-bottom: 1px solid #1e1e24; }
+  .run-log-line:last-child { border-bottom: none; }
+  .run-log-line.ok { color: var(--success); }
+  .run-log-line.err { color: var(--danger); }
+  .run-log-line.info { color: var(--accent); }
+  .run-log-line.warn { color: var(--warn); }
+  .feishu-table-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .feishu-table-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .feishu-table-card:hover { border-color: var(--accent-dim); }
+  .feishu-table-card.linked { border-color: var(--accent); background: #131a08; }
+  .feishu-table-card .ftc-icon { font-size: 20px; margin-bottom: 6px; }
+  .feishu-table-card .ftc-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .feishu-table-card .ftc-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+  .feishu-table-card .ftc-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: none;
+  }
+  .feishu-table-card.linked .ftc-badge { display: block; }
+  .auto-mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .auto-mode-opt {
+    padding: 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .auto-mode-opt:hover, .auto-mode-opt.selected {
+    border-color: var(--accent);
+    background: #1a1f0f;
+  }
+  .auto-mode-opt .amo-icon { font-size: 24px; margin-bottom: 6px; }
+  .auto-mode-opt .amo-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .auto-mode-opt .amo-desc { font-size: 11px; color: var(--text-muted); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BlogBot <span>/ AI Content Automation</span></div>
+  <div class="header-actions">
+    <div class="feishu-status-bar" style="margin-bottom:0; padding:6px 12px; cursor:pointer" onclick="showTab('scheduler')">
+      <div class="feishu-dot" id="feishu-dot"></div>
+      <span id="feishu-status-text" class="mono text-sm">飞书未连接</span>
+    </div>
+    <div id="scheduler-countdown" class="mono text-sm color-muted" style="display:none"></div>
+    <span class="text-sm color-muted mono" id="todayDate"></span>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('scheduler')">⏰ 定时器</button>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('setup')">⚙ Settings</button>
+    <button class="btn btn-primary btn-sm" onclick="runFullAutoWorkflow()">▶ 立即执行</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('topics')" id="tab-topics">01 · Select Topic</div>
+  <div class="tab" onclick="showTab('outline')" id="tab-outline">02 · Review Outline</div>
+  <div class="tab" onclick="showTab('article')" id="tab-article">03 · Article + Images</div>
+  <div class="tab" onclick="showTab('publish')" id="tab-publish">04 · Publish</div>
+  <div class="tab" onclick="showTab('history')" id="tab-history">History <span class="badge" id="history-badge">0</span></div>
+  <div class="tab" onclick="showTab('scheduler')" id="tab-scheduler">⏰ 定时 & 飞书</div>
+  <div class="tab" onclick="showTab('setup')" id="tab-setup">⚙ Setup</div>
+</div>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h4>Stats</h4>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="val" id="stat-published">0</div>
+          <div class="lbl">Published</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="stat-topics">0</div>
+          <div class="lbl">Topics Used</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="stat-images">0</div>
+          <div class="lbl">Images Gen.</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="stat-drafts">0</div>
+          <div class="lbl">Drafts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>Competitor Sources</h4>
+      <div class="competitor-list" id="competitor-list">
+        <div class="competitor-item"><div class="competitor-dot"></div>No sources added</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>Workflow Progress</h4>
+      <div id="sidebar-progress" style="font-size: 12px; color: var(--text-muted); line-height: 1.8;">
+        <div>☐ Topic selected</div>
+        <div>☐ Outline approved</div>
+        <div>☐ Article generated</div>
+        <div>☐ Images generated</div>
+        <div>☐ Published</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- TOPICS PANEL -->
+    <div class="panel active" id="panel-topics">
+      <div class="section-title">
+        <h2>Today's Topic Suggestions</h2>
+        <div class="line"></div>
+        <button class="btn btn-ghost btn-sm" onclick="generateTopics()" id="gen-topics-btn">
+          <span class="loading-spinner" id="topics-spinner" style="display:none"></span>
+          ✦ Generate Topics
+        </button>
+      </div>
+
+      <div id="topics-empty" class="empty-state">
+        <div class="es-icon">🎯</div>
+        <h3>Ready to find your next topic</h3>
+        <p>Click "Generate Topics" to get AI-powered suggestions based on your competitor content and SEO keywords. Already-written topics are automatically excluded.</p>
+        <button class="btn btn-primary btn-lg" onclick="generateTopics()">✦ Generate Topics</button>
+      </div>
+
+      <div class="topic-grid" id="topics-grid" style="display:none"></div>
+
+      <div id="topic-action-bar" style="display:none; margin-top:24px;" class="flex gap-12">
+        <button class="btn btn-primary" onclick="approveTopicAndOutline()">
+          <span class="loading-spinner" id="outline-spinner" style="display:none"></span>
+          Generate Outline →
+        </button>
+        <button class="btn btn-ghost" onclick="generateTopics()">↺ Regenerate</button>
+      </div>
+    </div>
+
+    <!-- OUTLINE PANEL -->
+    <div class="panel" id="panel-outline">
+      <div class="section-title">
+        <h2>Review Outline</h2>
+        <div class="line"></div>
+        <button class="btn btn-ghost btn-sm" onclick="showTab('topics')">← Back</button>
+      </div>
+
+      <div id="outline-empty" class="empty-state">
+        <div class="es-icon">📋</div>
+        <h3>No outline yet</h3>
+        <p>Select and approve a topic first, then the AI will generate a detailed article outline for you to review.</p>
+      </div>
+
+      <div id="outline-content" style="display:none">
+        <div class="outline-section">
+          <div class="outline-header">
+            <div class="text-sm color-muted mono" style="margin-bottom:6px">ARTICLE TITLE</div>
+            <h2 id="outline-title" style="font-family:'DM Serif Display',serif; font-size:26px"></h2>
+            <div class="kw-list" id="outline-keywords"></div>
+          </div>
+
+          <div id="outline-blocks"></div>
+
+          <div class="flex gap-12 mt-24">
+            <button class="btn btn-primary" onclick="approveOutlineAndWrite()">
+              <span class="loading-spinner" id="write-spinner" style="display:none"></span>
+              ✓ Approve & Write Article →
+            </button>
+            <button class="btn btn-ghost" onclick="regenerateOutline()">↺ Regenerate Outline</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE PANEL -->
+    <div class="panel" id="panel-article">
+      <div class="section-title">
+        <h2>Article & Images</h2>
+        <div class="line"></div>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="showTab('outline')">← Back</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateImages()" id="gen-img-btn">🖼 Generate Images</button>
+        </div>
+      </div>
+
+      <div id="article-empty" class="empty-state">
+        <div class="es-icon">✍️</div>
+        <h3>Article not generated yet</h3>
+        <p>Approve the outline to automatically write the full SEO-optimized article with image placeholders.</p>
+      </div>
+
+      <div id="article-content" style="display:none">
+        <div class="article-wrap">
+          <div class="article-meta-bar">
+            <div class="meta-item"><div class="mk">Words</div><div class="mv" id="meta-words">—</div></div>
+            <div class="meta-item"><div class="mk">Reading Time</div><div class="mv" id="meta-read">—</div></div>
+            <div class="meta-item"><div class="mk">Primary KW</div><div class="mv" id="meta-kw">—</div></div>
+            <div class="meta-item"><div class="mk">KW Density</div><div class="mv" id="meta-density">—</div></div>
+            <div class="meta-item"><div class="mk">Images</div><div class="mv" id="meta-imgs">—</div></div>
+          </div>
+
+          <div class="article-body">
+            <div class="article-body-inner" id="article-body-inner"></div>
+          </div>
+
+          <div class="seo-box mt-24">
+            <h4>SEO Preview (Google SERP)</h4>
+            <div class="seo-preview">
+              <div class="sp-url" id="seo-url"></div>
+              <div class="sp-title" id="seo-title"></div>
+              <div class="sp-desc" id="seo-desc"></div>
+            </div>
+            <div class="flex gap-8">
+              <div style="flex:1">
+                <label>Meta Title</label>
+                <input id="meta-title-input" type="text" maxlength="60" oninput="updateSEOPreview()">
+                <div class="text-sm color-muted mono mt-16" id="meta-title-count">0/60</div>
+              </div>
+            </div>
+            <div class="form-group mt-16">
+              <label>Meta Description</label>
+              <textarea id="meta-desc-input" rows="2" maxlength="160" oninput="updateSEOPreview()"></textarea>
+              <div class="text-sm color-muted mono" id="meta-desc-count">0/160</div>
+            </div>
+          </div>
+
+          <div class="flex gap-12 mt-24">
+            <button class="btn btn-primary btn-lg" onclick="showTab('publish')">Review & Publish →</button>
+            <button class="btn btn-ghost" onclick="generateImages()">
+              <span class="loading-spinner" id="img-spinner" style="display:none"></span>
+              🖼 Generate All Images
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PUBLISH PANEL -->
+    <div class="panel" id="panel-publish">
+      <div class="section-title">
+        <h2>Publish to Shopify</h2>
+        <div class="line"></div>
+        <button class="btn btn-ghost btn-sm" onclick="showTab('article')">← Back</button>
+      </div>
+
+      <div id="publish-empty" class="empty-state">
+        <div class="es-icon">🚀</div>
+        <h3>Nothing ready to publish</h3>
+        <p>Complete the article generation step first.</p>
+      </div>
+
+      <div id="publish-content" style="display:none; max-width:700px">
+        <div class="card" style="margin-bottom:20px">
+          <h3>Article Summary</h3>
+          <p class="desc" id="publish-summary">—</p>
+          <div class="flex gap-8" style="flex-wrap:wrap" id="publish-chips"></div>
+        </div>
+
+        <div class="card">
+          <h3>Publish Options</h3>
+          <p class="desc">Choose how to send this article to Shopify.</p>
+          <div class="publish-options">
+            <div class="pub-opt selected" onclick="selectPubOpt(this, 'draft')" id="pubopt-draft">
+              <div class="po-icon">📝</div>
+              <div class="po-title">Save as Draft</div>
+              <div class="po-desc">Publish manually from Shopify admin after final review</div>
+            </div>
+            <div class="pub-opt" onclick="selectPubOpt(this, 'live')" id="pubopt-live">
+              <div class="po-icon">🚀</div>
+              <div class="po-title">Publish Live</div>
+              <div class="po-desc">Go live immediately on your blog</div>
+            </div>
+          </div>
+
+          <div class="form-group mt-24">
+            <label>Shopify Blog ID</label>
+            <input type="text" id="pub-blog-id" placeholder="e.g. 12345678901" value="">
+          </div>
+
+          <div class="flex gap-12 mt-16">
+            <button class="btn btn-primary btn-lg" onclick="publishToShopify()">
+              <span class="loading-spinner" id="publish-spinner" style="display:none"></span>
+              ✦ Push to Shopify
+            </button>
+            <button class="btn btn-ghost" onclick="copyHTMLToClipboard()">📋 Copy HTML</button>
+          </div>
+
+          <div class="stream-box" id="publish-log" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- SCHEDULER & FEISHU PANEL -->
+    <div class="panel" id="panel-scheduler">
+      <div class="section-title">
+        <h2>定时任务 & 飞书联动</h2>
+        <div class="line"></div>
+        <button class="btn btn-primary btn-sm" onclick="runFullAutoWorkflow()">▶ 立即手动执行</button>
+      </div>
+
+      <!-- AUTO MODE -->
+      <div class="scheduler-card">
+        <h3>🤖 自动化模式</h3>
+        <p class="desc">选择触发方式，两种可以同时开启。网页必须保持打开状态定时器才能运行。</p>
+        <div class="auto-mode-selector">
+          <div class="auto-mode-opt selected" id="mode-scheduled" onclick="toggleAutoMode('scheduled', this)">
+            <div class="amo-icon">⏰</div>
+            <div class="amo-title">定时自动运行</div>
+            <div class="amo-desc">每天指定时间自动触发完整工作流</div>
+          </div>
+          <div class="auto-mode-opt selected" id="mode-manual" onclick="toggleAutoMode('manual', this)">
+            <div class="amo-icon">🖱️</div>
+            <div class="amo-title">手动随时触发</div>
+            <div class="amo-desc">点「立即执行」按钮随时跑一次</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMER SETTINGS -->
+      <div class="scheduler-card" id="scheduled-settings">
+        <h3>⏰ 定时设置</h3>
+        <p class="desc">设定每天自动执行的时间。工作流会自动完成：从飞书读取数据 → 生成选题 → 写文章 → 生图 → 推送 Shopify（草稿）→ 回写飞书记录表。</p>
+        <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap">
+          <div class="form-group" style="margin:0">
+            <label>执行时间</label>
+            <input type="time" id="schedule-time" value="09:00" style="width:140px" onchange="saveScheduler()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>执行频率</label>
+            <select id="schedule-freq" style="width:160px" onchange="saveScheduler()">
+              <option value="daily">每天</option>
+              <option value="weekdays">仅工作日</option>
+              <option value="weekly">每周一次</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>发布方式</label>
+            <select id="schedule-publish" style="width:160px" onchange="saveScheduler()">
+              <option value="draft">存为草稿（推荐）</option>
+              <option value="live">直接发布</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="activateScheduler()">
+            <span id="scheduler-toggle-text">启动定时器</span>
+          </button>
+        </div>
+        <div class="countdown-box" id="countdown-box" style="display:none">
+          <span>下次执行：</span>
+          <span class="cd-val" id="countdown-val">--:--:--</span>
+          <span class="color-muted">|</span>
+          <span id="next-run-time" class="color-muted text-sm mono"></span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="deactivateScheduler()">停止</button>
+        </div>
+      </div>
+
+      <!-- FEISHU CONFIG -->
+      <div class="scheduler-card">
+        <h3>🪶 飞书多维表格配置</h3>
+        <p class="desc">创建飞书自建应用后填入凭证。BlogBot 会从飞书读取竞品内容和品牌知识，并在发布后自动回写文章记录。</p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px">
+          <div class="form-group" style="margin:0">
+            <label>飞书版本</label>
+            <select id="feishu-version" onchange="saveFeishuSettings()">
+              <option value="feishu">国内版 feishu.cn</option>
+              <option value="lark">国际版 larksuite.com</option>
+            </select>
+          </div>
+          <div></div>
+          <div class="form-group" style="margin:0">
+            <label>App ID</label>
+            <input type="text" id="feishu-app-id" placeholder="cli_xxxxxxxxxxxxxxxx" oninput="saveFeishuSettings()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>App Secret</label>
+            <input type="password" id="feishu-app-secret" placeholder="xxxxxxxxxxxxxxxx" oninput="saveFeishuSettings()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>多维表格 App Token</label>
+            <input type="text" id="feishu-bitable-token" placeholder="bascn..." oninput="saveFeishuSettings()">
+          </div>
+          <div class="form-group" style="margin:0; align-self:flex-end">
+            <button class="btn btn-ghost" onclick="testFeishuConnection()" id="feishu-test-btn">
+              <span class="loading-spinner" id="feishu-test-spinner" style="display:none"></span>
+              测试连接
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label>绑定表格（连接成功后自动列出，点击绑定）</label>
+          <div class="feishu-table-grid" id="feishu-tables-grid">
+            <div class="feishu-table-card">
+              <div class="ftc-icon">📊</div>
+              <div class="ftc-name">竞品内容库</div>
+              <div class="ftc-id" id="ftc-competitor-id">未绑定</div>
+              <div class="ftc-badge">已绑定</div>
+            </div>
+            <div class="feishu-table-card">
+              <div class="ftc-icon">🏷️</div>
+              <div class="ftc-name">品牌知识库</div>
+              <div class="ftc-id" id="ftc-brand-id">未绑定</div>
+              <div class="ftc-badge">已绑定</div>
+            </div>
+            <div class="feishu-table-card">
+              <div class="ftc-icon">📝</div>
+              <div class="ftc-name">已发文章记录</div>
+              <div class="ftc-id" id="ftc-history-id">未绑定</div>
+              <div class="ftc-badge">已绑定</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <label>字段名映射（填入你飞书表格里实际的列名）</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:8px">
+            <div>
+              <label style="font-size:10px; color:var(--accent)">竞品表 · 标题字段</label>
+              <input type="text" id="field-comp-title" value="文章标题" oninput="saveFeishuSettings()" style="font-size:12px">
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--accent)">竞品表 · 关键词字段</label>
+              <input type="text" id="field-comp-kw" value="核心关键词" oninput="saveFeishuSettings()" style="font-size:12px">
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--accent)">竞品表 · 摘要字段</label>
+              <input type="text" id="field-comp-summary" value="内容摘要" oninput="saveFeishuSettings()" style="font-size:12px">
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--accent)">品牌表 · 类型字段</label>
+              <input type="text" id="field-brand-type" value="类型" oninput="saveFeishuSettings()" style="font-size:12px">
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--accent)">品牌表 · 内容字段</label>
+              <input type="text" id="field-brand-content" value="内容" oninput="saveFeishuSettings()" style="font-size:12px">
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--accent)">记录表 · 标题字段</label>
+              <input type="text" id="field-hist-title" value="标题" oninput="saveFeishuSettings()" style="font-size:12px">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top:20px" onclick="syncFromFeishu()">
+          <span class="loading-spinner" id="sync-spinner" style="display:none"></span>
+          ↓ 立即从飞书同步数据
+        </button>
+      </div>
+
+      <!-- RUN LOG -->
+      <div class="scheduler-card">
+        <h3>📋 运行日志</h3>
+        <p class="desc">记录每次自动或手动执行的结果。</p>
+        <div class="run-log" id="run-log">
+          <div class="run-log-line info">[系统] BlogBot 已就绪，等待执行…</div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('run-log').innerHTML = \'<div class=\\'run-log-line info\\'>[系统] 日志已清除</div>\'">清空日志</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="panel" id="panel-history">
+      <div class="section-title">
+        <h2>Published Articles</h2>
+        <div class="line"></div>
+        <button class="btn btn-ghost btn-sm" onclick="clearHistory()">🗑 Clear History</button>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="empty-state">
+          <div class="es-icon">📚</div>
+          <h3>No articles yet</h3>
+          <p>Articles you publish will be remembered here to avoid duplicate topics.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETUP PANEL -->
+    <div class="panel" id="panel-setup">
+      <div class="section-title">
+        <h2>Setup & Configuration</h2>
+        <div class="line"></div>
+      </div>
+
+      <div class="setup-grid">
+        <!-- API Keys -->
+        <div class="card">
+          <h3>API Keys</h3>
+          <p class="desc">Your keys are stored locally in your browser only.</p>
+          <div class="form-group">
+            <label>Anthropic (Claude) API Key</label>
+            <input type="password" id="key-claude" placeholder="sk-ant-..." oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label>Gemini API Key</label>
+            <input type="password" id="key-gemini" placeholder="AIza..." oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label>Shopify Admin API Token</label>
+            <input type="password" id="key-shopify" placeholder="shpat_..." oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label>Shopify Store Domain</label>
+            <input type="text" id="shopify-domain" placeholder="yourstore.myshopify.com" oninput="saveSettings()">
+          </div>
+        </div>
+
+        <!-- Blog Settings -->
+        <div class="card">
+          <h3>Blog Settings</h3>
+          <p class="desc">Customize your content strategy.</p>
+          <div class="form-group">
+            <label>Brand / Niche Description</label>
+            <textarea id="brand-desc" placeholder="e.g. We sell eco-friendly skincare products targeting women 25-45..." rows="3" oninput="saveSettings()"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Target Article Length</label>
+            <select id="article-length" onchange="saveSettings()">
+              <option value="800">Short — 800 words</option>
+              <option value="1200" selected>Medium — 1,200 words (recommended)</option>
+              <option value="1500">Long-Medium — 1,500 words</option>
+              <option value="2000">Long — 2,000 words</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Image Style</label>
+            <select id="image-style" onchange="saveSettings()">
+                <option value="product photography, clean white background, professional">Product Photography</option>
+              <option value="lifestyle photography, natural light, aspirational">Lifestyle Photography</option>
+              <option value="flat lay, minimalist, editorial">Flat Lay / Editorial</option>
+              <option value="clean minimal illustration, flat design, simple icons, soft pastel colors, white background, infographic style" selected>简洁插图 / 信息图</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Competitor URLs -->
+        <div class="card" style="grid-column: 1 / -1">
+          <h3>Competitor Blog URLs</h3>
+          <p class="desc">Add competitor blog URLs. Their content structure will be analyzed as reference for topic generation and SEO benchmarking.</p>
+          <div class="form-group">
+            <label>Add URLs (press Enter after each)</label>
+            <div class="tag-input-wrap" id="url-tag-wrap" onclick="document.getElementById('url-input').focus()">
+              <input type="text" id="url-input" placeholder="https://competitor.com/blogs/news" onkeydown="handleURLInput(event)">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Seed Keywords (press Enter after each)</label>
+            <div class="tag-input-wrap" id="kw-tag-wrap" onclick="document.getElementById('kw-input').focus()">
+              <input type="text" id="kw-input" placeholder="e.g. organic skincare, retinol serum" onkeydown="handleKWInput(event)">
+            </div>
+          </div>
+
+          <div class="mt-16">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="ti">Auto-avoid duplicate topics</div>
+                <div class="td">Never suggest a topic you've already written about</div>
+              </div>
+              <div class="toggle on" id="toggle-dedup" onclick="toggleSetting(this)"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="ti">Auto-generate images</div>
+                <div class="td">Call Gemini API to generate images after article is written</div>
+              </div>
+              <div class="toggle on" id="toggle-autoimages" onclick="toggleSetting(this)"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="ti">Include internal links</div>
+                <div class="td">AI will suggest internal links based on your history</div>
+              </div>
+              <div class="toggle on" id="toggle-interlinks" onclick="toggleSetting(this)"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary mt-24" onclick="saveSettings(); notify('Settings saved!', 'success')">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">
+  <span id="notif-icon">✓</span>
+  <span id="notif-text">Saved!</span>
+</div>
+
+<script>
+// =========================================================
+// STATE
+// =========================================================
+const state = {
+  topics: [],
+  selectedTopic: null,
+  outline: null,
+  article: null,
+  images: [],
+  history: [],
+  publishMode: 'draft',
+  feishuData: { competitors: [], brandInfo: [], publishedTitles: [] },
+  scheduler: { active: false, timerId: null, intervalId: null },
+  feishu: {
+    appId: '', appSecret: '', biTableToken: '', version: 'feishu',
+    tableCompetitor: '', tableBrand: '', tableHistory: '',
+    tenantToken: '', tokenExpiry: 0,
+    fields: { compTitle:'文章标题', compKw:'核心关键词', compSummary:'内容摘要',
+              brandType:'类型', brandContent:'内容', histTitle:'标题' }
+  },
+  settings: {
+    claudeKey: '',
+    geminiKey: '',
+    shopifyToken: '',
+    shopifyDomain: '',
+    brandDesc: '',
+    articleLength: '1200',
+    imageStyle: 'product photography, clean white background, professional',
+    competitorURLs: [],
+    seedKeywords: [],
+    autoDedup: true,
+    autoImages: true,
+    interLinks: true
+  }
+};
+
+// =========================================================
+// INIT
+// =========================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+  loadSettings();
+  loadHistory();
+  loadFeishuSettings();
+  loadScheduler();
+  updateStats();
+});
+
+// =========================================================
+// NAVIGATION
+// =========================================================
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// =========================================================
+// SETTINGS
+// =========================================================
+function saveSettings() {
+  state.settings.claudeKey = document.getElementById('key-claude').value;
+  state.settings.geminiKey = document.getElementById('key-gemini').value;
+  state.settings.shopifyToken = document.getElementById('key-shopify').value;
+  state.settings.shopifyDomain = document.getElementById('shopify-domain').value;
+  state.settings.brandDesc = document.getElementById('brand-desc').value;
+  state.settings.articleLength = document.getElementById('article-length').value;
+  state.settings.imageStyle = document.getElementById('image-style').value;
+  // Save to sessionStorage (keys never leave browser)
+  try {
+    const s = {...state.settings, claudeKey:'', geminiKey:'', shopifyToken:''};
+    sessionStorage.setItem('blogbot_settings', JSON.stringify(s));
+    // Keys stored separately in session only
+    sessionStorage.setItem('blogbot_keys', JSON.stringify({
+      c: state.settings.claudeKey,
+      g: state.settings.geminiKey,
+      s: state.settings.shopifyToken
+    }));
+  } catch(e) {}
+  updateCompetitorSidebar();
+}
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('blogbot_settings') || '{}');
+    const k = JSON.parse(sessionStorage.getItem('blogbot_keys') || '{}');
+    Object.assign(state.settings, s);
+    if (k.c) state.settings.claudeKey = k.c;
+    if (k.g) state.settings.geminiKey = k.g;
+    if (k.s) state.settings.shopifyToken = k.s;
+  } catch(e) {}
+  // Apply to UI
+  document.getElementById('key-claude').value = state.settings.claudeKey || '';
+  document.getElementById('key-gemini').value = state.settings.geminiKey || '';
+  document.getElementById('key-shopify').value = state.settings.shopifyToken || '';
+  document.getElementById('shopify-domain').value = state.settings.shopifyDomain || '';
+  document.getElementById('brand-desc').value = state.settings.brandDesc || '';
+  document.getElementById('article-length').value = state.settings.articleLength || '1200';
+  state.settings.imageStyle = state.settings.imageStyle || 'clean minimal illustration, flat design, simple icons, soft pastel colors, white background, infographic style';
+  document.getElementById('image-style').value = state.settings.imageStyle || '';
+  // Render tags
+  (state.settings.competitorURLs || []).forEach(u => addTag('url', u));
+  (state.settings.seedKeywords || []).forEach(k => addTag('kw', k));
+  updateCompetitorSidebar();
+}
+
+function toggleSetting(el) {
+  el.classList.toggle('on');
+  if (el.id === 'toggle-dedup') state.settings.autoDedup = el.classList.contains('on');
+  if (el.id === 'toggle-autoimages') state.settings.autoImages = el.classList.contains('on');
+  if (el.id === 'toggle-interlinks') state.settings.interLinks = el.classList.contains('on');
+}
+
+// =========================================================
+// TAG INPUTS
+// =========================================================
+function handleURLInput(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (val && !state.settings.competitorURLs.includes(val)) {
+      state.settings.competitorURLs.push(val);
+      addTag('url', val);
+      e.target.value = '';
+      updateCompetitorSidebar();
+      saveSettings();
+    }
+  }
+}
+
+function handleKWInput(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (val && !state.settings.seedKeywords.includes(val)) {
+      state.settings.seedKeywords.push(val);
+      addTag('kw', val);
+      e.target.value = '';
+      saveSettings();
+    }
+  }
+}
+
+function addTag(type, val) {
+  const wrap = document.getElementById(type === 'url' ? 'url-tag-wrap' : 'kw-tag-wrap');
+  const input = document.getElementById(type === 'url' ? 'url-input' : 'kw-input');
+  const tag = document.createElement('span');
+  tag.className = 'tag';
+  const short = val.length > 35 ? val.replace('https://', '').substring(0, 32) + '…' : val;
+  tag.innerHTML = `${short} <span class="rm" onclick="removeTag('${type}', '${val}', this)">×</span>`;
+  wrap.insertBefore(tag, input);
+}
+
+function removeTag(type, val, el) {
+  el.parentElement.remove();
+  if (type === 'url') state.settings.competitorURLs = state.settings.competitorURLs.filter(u => u !== val);
+  else state.settings.seedKeywords = state.settings.seedKeywords.filter(k => k !== val);
+  updateCompetitorSidebar();
+  saveSettings();
+}
+
+function updateCompetitorSidebar() {
+  const list = document.getElementById('competitor-list');
+  const urls = state.settings.competitorURLs;
+  if (!urls.length) {
+    list.innerHTML = '<div class="competitor-item"><div class="competitor-dot" style="background:var(--border)"></div>No sources added</div>';
+    return;
+  }
+  list.innerHTML = urls.map(u => `
+    <div class="competitor-item">
+      <div class="competitor-dot"></div>
+      ${u.replace('https://','').replace('http://','').split('/')[0]}
+    </div>`).join('');
+}
+
+// =========================================================
+// HISTORY
+// =========================================================
+function loadHistory() {
+  try {
+    state.history = JSON.parse(sessionStorage.getItem('blogbot_history') || '[]');
+  } catch(e) { state.history = []; }
+  renderHistory();
+  updateStats();
+}
+
+function saveHistory() {
+  try { sessionStorage.setItem('blogbot_history', JSON.stringify(state.history)); } catch(e) {}
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const badge = document.getElementById('history-badge');
+  badge.textContent = state.history.length;
+  if (!state.history.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="es-icon">📚</div>
+      <h3>No articles yet</h3>
+      <p>Articles you publish will be remembered here to avoid duplicate topics.</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = state.history.map(h => `
+    <div class="history-item">
+      <div class="hi-status status-${h.status}"></div>
+      <div>
+        <div class="hi-title">${h.title}</div>
+        <div class="flex gap-8 mt-16" style="flex-wrap:wrap; margin-top:6px">
+          ${(h.keywords||[]).map(k => `<span class="chip chip-blue">${k}</span>`).join('')}
+        </div>
+      </div>
+      <div class="hi-meta">${h.date}<br>${h.words||'—'} words</div>
+    </div>`).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Clear all history? Topics will no longer be excluded from suggestions.')) return;
+  state.history = [];
+  saveHistory();
+  renderHistory();
+  updateStats();
+  notify('History cleared', 'success');
+}
+
+// =========================================================
+// STATS
+// =========================================================
+function updateStats() {
+  document.getElementById('stat-published').textContent = state.history.filter(h => h.status === 'published').length;
+  document.getElementById('stat-topics').textContent = state.history.length;
+  document.getElementById('stat-images').textContent = state.images.length || 0;
+  document.getElementById('stat-drafts').textContent = state.history.filter(h => h.status === 'draft').length;
+}
+
+// =========================================================
+// CLAUDE API CALL
+// =========================================================
+async function callClaude(systemPrompt, userPrompt, onChunk) {
+  const key = state.settings.claudeKey;
+  if (!key) throw new Error('No Claude API key. Please add it in Setup.');
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.content[0].text;
+}
+
+// =========================================================
+// GEMINI IMAGE GENERATION
+// =========================================================
+async function callGeminiImage(prompt) {
+  const key = state.settings.geminiKey;
+  if (!key) throw new Error('No Gemini API key configured.');
+  // Gemini Imagen 3 via generateContent with image output
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      instances: [{ prompt: prompt }],
+      parameters: { sampleCount: 1, aspectRatio: '16:9' }
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  return 'data:image/png;base64,' + data.predictions[0].bytesBase64Encoded;
+}
+
+// =========================================================
+// TOPIC GENERATION
+// =========================================================
+async function generateTopics() {
+  const btn = document.getElementById('gen-topics-btn');
+  const spinner = document.getElementById('topics-spinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  document.getElementById('topics-empty').style.display = 'none';
+  document.getElementById('topics-grid').style.display = 'none';
+  document.getElementById('topic-action-bar').style.display = 'none';
+
+  const usedTopics = state.history.map(h => h.title);
+  const competitors = state.settings.competitorURLs.join(', ') || 'various competitors';
+  const keywords = state.settings.seedKeywords.join(', ') || 'relevant industry keywords';
+  const brand = state.settings.brandDesc || 'an e-commerce brand';
+
+  const system = `You are an expert SEO content strategist for a Shopify e-commerce brand. 
+You generate high-potential blog topic ideas based on competitor analysis and SEO best practices.
+Always respond with valid JSON only, no markdown, no explanation.`;
+
+  const user = `Brand context: ${brand}
+Competitor blogs to benchmark: ${competitors}
+Seed keywords: ${keywords}
+Already written topics (EXCLUDE these): ${usedTopics.join('; ') || 'none yet'}
+
+Generate 5 unique blog topic suggestions. Each should be different content type (how-to, listicle, comparison, guide, explainer).
+
+Return JSON array:
+[
+  {
+    "title": "Full article title with target keyword",
+    "primaryKeyword": "main keyword phrase",
+    "secondaryKeywords": ["kw2", "kw3", "kw4"],
+    "contentType": "How-To Guide",
+    "estimatedSearchVolume": "High/Medium/Low",
+    "difficulty": "Easy/Medium/Hard",
+    "rationale": "2 sentence explanation of why this topic works for SEO and conversions"
+  }
+]`;
+
+  try {
+    const result = await callClaude(system, user);
+    const clean = result.replace(/```json|```/g, '').trim();
+    state.topics = JSON.parse(clean);
+    renderTopics();
+    notify('5 topics generated!', 'success');
+  } catch(e) {
+    notify('Error: ' + e.message, 'error');
+    document.getElementById('topics-empty').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function renderTopics() {
+  const grid = document.getElementById('topics-grid');
+  grid.style.display = 'grid';
+  state.selectedTopic = null;
+  grid.innerHTML = state.topics.map((t, i) => `
+    <div class="topic-card" onclick="selectTopic(${i})" id="topic-${i}">
+      <div class="sel-badge">✓</div>
+      <div class="title">${t.title}</div>
+      <div class="meta">
+        <span class="chip chip-green">${t.contentType}</span>
+        <span class="chip chip-blue">${t.primaryKeyword}</span>
+        <span class="chip chip-orange">Vol: ${t.estimatedSearchVolume} · ${t.difficulty}</span>
+      </div>
+      <div class="rationale">${t.rationale}</div>
+    </div>`).join('');
+}
+
+function selectTopic(i) {
+  document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('topic-' + i).classList.add('selected');
+  state.selectedTopic = state.topics[i];
+  document.getElementById('topic-action-bar').style.display = 'flex';
+}
+
+// =========================================================
+// OUTLINE GENERATION
+// =========================================================
+async function approveTopicAndOutline() {
+  if (!state.selectedTopic) { notify('Select a topic first', 'error'); return; }
+  const spinner = document.getElementById('outline-spinner');
+  spinner.style.display = 'inline-block';
+
+  const t = state.selectedTopic;
+  const length = state.settings.articleLength;
+  const brand = state.settings.brandDesc || 'an e-commerce brand';
+
+  const system = `You are an expert SEO content architect. Create detailed, conversion-focused blog outlines.
+Return valid JSON only.`;
+
+  const user = `Create a detailed blog article outline for:
+Title: "${t.title}"
+Primary Keyword: ${t.primaryKeyword}
+Secondary Keywords: ${t.secondaryKeywords.join(', ')}
+Brand: ${brand}
+Target length: ${length} words
+Content type: ${t.contentType}
+
+Return JSON:
+{
+  "title": "Final H1 title",
+  "metaTitle": "SEO meta title (max 60 chars)",
+  "metaDescription": "SEO meta description (max 160 chars)",
+  "primaryKeyword": "...",
+  "secondaryKeywords": ["..."],
+  "sections": [
+    {
+      "level": "H2",
+      "heading": "Section heading",
+      "keyPoints": ["Point 1", "Point 2", "Point 3"],
+      "needsImage": true,
+      "imagePrompt": "Detailed image generation prompt for this section",
+      "imageName": "seo-friendly-filename-no-spaces",
+      "imageAlt": "SEO-optimized alt text with keyword"
+    }
+  ]
+}`;
+
+  try {
+    const result = await callClaude(system, user);
+    const clean = result.replace(/```json|```/g, '').trim();
+    state.outline = JSON.parse(clean);
+    renderOutline();
+    showTab('outline');
+    notify('Outline ready for review!', 'success');
+  } catch(e) {
+    notify('Error: ' + e.message, 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function renderOutline() {
+  if (!state.outline) return;
+  const o = state.outline;
+  document.getElementById('outline-title').textContent = o.title;
+  document.getElementById('outline-content').style.display = 'block';
+  document.getElementById('outline-empty').style.display = 'none';
+
+  const kwHtml = [o.primaryKeyword, ...(o.secondaryKeywords||[])].map((k,i) =>
+    `<span class="chip ${i===0?'chip-green':'chip-blue'}">${k}</span>`).join('');
+  document.getElementById('outline-keywords').innerHTML = kwHtml;
+
+  document.getElementById('outline-blocks').innerHTML = (o.sections||[]).map((s, i) => `
+    <div class="outline-block">
+      <div class="outline-block-header">
+        <span class="outline-level">${s.level}</span>
+        <input type="text" value="${s.heading}" onchange="state.outline.sections[${i}].heading=this.value" style="width:100%">
+      </div>
+      <div class="outline-block-body">
+        <ul>${(s.keyPoints||[]).map(p => `<li>${p}</li>`).join('')}</ul>
+        ${s.needsImage ? `<div class="img-placeholder">🖼 Image: <em>${s.imageAlt || s.imageName}</em></div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function regenerateOutline() {
+  if (!state.selectedTopic) { notify('No topic selected', 'error'); return; }
+  await approveTopicAndOutline();
+}
+
+// =========================================================
+// ARTICLE GENERATION
+// =========================================================
+async function approveOutlineAndWrite() {
+  if (!state.outline) { notify('No outline loaded', 'error'); return; }
+  const spinner = document.getElementById('write-spinner');
+  spinner.style.display = 'inline-block';
+
+  const o = state.outline;
+  const length = state.settings.articleLength;
+  const brand = state.settings.brandDesc || 'an e-commerce brand';
+  const usedTitles = state.history.map(h => h.title);
+
+  const system = `You are an expert SEO blog writer for e-commerce brands. 
+Write engaging, informative content that ranks well and converts readers.
+Use natural keyword placement. Write in a helpful, authoritative but approachable tone.
+Return the article as clean HTML (no doctype, no <html>/<body> wrappers). 
+Use: <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>.
+Where images are needed, insert: <div class="img-slot" data-name="FILENAME" data-alt="ALT_TEXT" data-prompt="IMAGE_PROMPT">IMAGE_PLACEHOLDER: FILENAME</div>`;
+
+  const user = `Write a complete ~${length} word blog article based on this outline:
+
+Title: ${o.title}
+Primary Keyword: ${o.primaryKeyword}
+Secondary Keywords: ${(o.secondaryKeywords||[]).join(', ')}
+Brand context: ${brand}
+${usedTitles.length ? `Previously covered topics (reference for internal links): ${usedTitles.slice(-10).join('; ')}` : ''}
+
+Outline sections:
+${(o.sections||[]).map(s => `
+## ${s.heading}
+Key points: ${(s.keyPoints||[]).join(', ')}
+${s.needsImage ? `[INSERT IMAGE: filename="${s.imageName}.jpg", alt="${s.imageAlt}", prompt="minimal flat illustration: ${s.imagePrompt}, simple shapes, pastel colors"]` : ''}`).join('\n')}
+
+Guidelines:
+- Include the primary keyword naturally in the first 100 words and in at least one H2
+- Keep paragraphs short (3-4 sentences max) for readability
+- Image prompts should describe simple, clear concepts suitable for flat illustration style
+- Write the full article now:`;
+
+  try {
+    const html = await callClaude(system, user);
+    state.article = {
+      html,
+      title: o.title,
+      metaTitle: o.metaTitle || o.title,
+      metaDescription: o.metaDescription || '',
+      primaryKeyword: o.primaryKeyword,
+      keywords: [o.primaryKeyword, ...(o.secondaryKeywords||[])],
+    };
+    renderArticle();
+    if (state.settings.autoImages) generateImages();
+    showTab('article');
+    notify('Article written! Generating images…', 'success');
+  } catch(e) {
+    notify('Error: ' + e.message, 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function renderArticle() {
+  if (!state.article) return;
+  document.getElementById('article-empty').style.display = 'none';
+  document.getElementById('article-content').style.display = 'block';
+
+  // Process HTML: replace img-slot divs with nice placeholders
+  let html = state.article.html;
+  html = html.replace(/<div class="img-slot"([^>]*)>([^<]*)<\/div>/g, (match, attrs) => {
+    const name = (attrs.match(/data-name="([^"]*)"/) || [])[1] || 'image';
+    const alt = (attrs.match(/data-alt="([^"]*)"/) || [])[1] || '';
+    return `<div class="inline-img" data-name="${name}" data-alt="${alt}">
+      <div class="img-icon">🖼️</div>
+      <div style="font-size:13px; color:var(--text-muted)">${alt || name}</div>
+      <div class="img-meta">filename: ${name}.jpg | alt: "${alt}"</div>
+      <div class="img-status"><span class="loading-spinner pulse"></span> Generating…</div>
+    </div>`;
+  });
+
+  document.getElementById('article-body-inner').innerHTML = html;
+
+  // Metrics
+  const text = document.getElementById('article-body-inner').innerText;
+  const words = text.split(/\s+/).filter(w => w.length > 0).length;
+  const kw = state.article.primaryKeyword || '';
+  const kwCount = (text.toLowerCase().match(new RegExp(kw.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g')) || []).length;
+  const density = words > 0 ? ((kwCount / words) * 100).toFixed(1) : 0;
+  const imgCount = (html.match(/class="inline-img"/g) || []).length;
+
+  document.getElementById('meta-words').textContent = words.toLocaleString();
+  document.getElementById('meta-read').textContent = Math.ceil(words / 230) + ' min';
+  document.getElementById('meta-kw').textContent = kw;
+  document.getElementById('meta-density').textContent = density + '%';
+  document.getElementById('meta-imgs').textContent = imgCount;
+
+  // SEO
+  document.getElementById('meta-title-input').value = state.article.metaTitle || '';
+  document.getElementById('meta-desc-input').value = state.article.metaDescription || '';
+  updateSEOPreview();
+}
+
+function updateSEOPreview() {
+  const title = document.getElementById('meta-title-input').value;
+  const desc = document.getElementById('meta-desc-input').value;
+  const domain = state.settings.shopifyDomain || 'yourstore.myshopify.com';
+  const slug = (state.article?.title || 'article').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  document.getElementById('seo-url').textContent = `${domain}/blogs/news/${slug}`;
+  document.getElementById('seo-title').textContent = title || '—';
+  document.getElementById('seo-desc').textContent = desc || '—';
+  document.getElementById('meta-title-count').textContent = `${title.length}/60`;
+  document.getElementById('meta-desc-count').textContent = `${desc.length}/160`;
+  if (state.article) {
+    state.article.metaTitle = title;
+    state.article.metaDescription = desc;
+  }
+}
+
+// =========================================================
+// IMAGE GENERATION
+// =========================================================
+async function generateImages() {
+  const spinner = document.getElementById('img-spinner');
+  spinner.style.display = 'inline-block';
+  document.getElementById('gen-img-btn').disabled = true;
+
+  const slots = document.querySelectorAll('.inline-img[data-name]');
+  let generated = 0;
+
+  for (const slot of slots) {
+    const name = slot.dataset.name;
+    const alt = slot.dataset.alt;
+    const prompt = slot.dataset.prompt || `${state.settings.imageStyle}, ${alt || name}, high quality`;
+
+    try {
+      const imageB64 = await callGeminiImage(`Clean minimal illustration style, flat design, simple geometric shapes, soft pastel color palette, white background, no text, no words, professional infographic aesthetic. Subject: ${prompt}. High resolution, crisp edges, modern editorial look.`);
+      slot.innerHTML = `
+        <img src="${imageB64}" alt="${alt}" style="width:100%; border-radius:6px; display:block">
+        <div class="img-meta" style="margin-top:8px">📁 ${name}.jpg &nbsp;|&nbsp; alt="${alt}"</div>
+      `;
+      slot.classList.add('img-generated');
+      slot.style.border = '1px solid var(--accent-dim)';
+      slot.style.background = '#0d120a';
+      generated++;
+      state.images.push({ name: name + '.jpg', alt, b64: imageB64 });
+      updateStats();
+    } catch(e) {
+      slot.querySelector('.img-status').innerHTML = `<span style="color:var(--danger)">⚠ ${e.message}</span>`;
+    }
+  }
+
+  spinner.style.display = 'none';
+  document.getElementById('gen-img-btn').disabled = false;
+  if (generated > 0) notify(`${generated} image(s) generated!`, 'success');
+}
+
+// =========================================================
+// PUBLISH
+// =========================================================
+function selectPubOpt(el, mode) {
+  document.querySelectorAll('.pub-opt').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  state.publishMode = mode;
+}
+
+function showPublishPanel() {
+  if (!state.article) return;
+  document.getElementById('publish-empty').style.display = 'none';
+  document.getElementById('publish-content').style.display = 'block';
+  document.getElementById('publish-summary').textContent = state.article.metaDescription || state.article.title;
+  document.getElementById('publish-chips').innerHTML = (state.article.keywords||[])
+    .map(k => `<span class="chip chip-green">${k}</span>`).join('');
+}
+
+// Override showTab to populate publish panel
+const _showTab = showTab;
+
+async function publishToShopify() {
+  const token = state.settings.shopifyToken;
+  const domain = state.settings.shopifyDomain;
+  const blogId = document.getElementById('pub-blog-id').value;
+
+  if (!token || !domain) { notify('Add Shopify credentials in Setup', 'error'); return; }
+  if (!blogId) { notify('Enter your Shopify Blog ID', 'error'); return; }
+  if (!state.article) { notify('No article to publish', 'error'); return; }
+
+  const spinner = document.getElementById('publish-spinner');
+  const log = document.getElementById('publish-log');
+  spinner.style.display = 'inline-block';
+  log.style.display = 'block';
+  log.innerHTML = '';
+
+  const addLog = (msg, type='') => {
+    const line = document.createElement('div');
+    line.className = 'stream-line ' + type;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  };
+
+  try {
+    addLog('Preparing article payload…', 'info');
+
+    const slug = state.article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g,'');
+    const status = state.publishMode === 'live' ? 'published' : 'hidden';
+
+    const payload = {
+      article: {
+        title: state.article.title,
+        body_html: state.article.html,
+        blog_id: blogId,
+        published: state.publishMode === 'live',
+        tags: (state.article.keywords||[]).join(', '),
+        metafields: [
+          { key: 'title_tag', value: state.article.metaTitle, type: 'single_line_text_field', namespace: 'global' },
+          { key: 'description_tag', value: state.article.metaDescription, type: 'single_line_text_field', namespace: 'global' }
+        ]
+      }
+    };
+
+    addLog(`Pushing to ${domain}…`, 'info');
+
+    const resp = await fetch(`https://${domain}/admin/api/2024-01/blogs/${blogId}/articles.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.errors ? JSON.stringify(err.errors) : `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    addLog(`✓ Article created! ID: ${data.article.id}`, 'ok');
+    addLog(`✓ Status: ${data.article.published_at ? 'Published' : 'Draft'}`, 'ok');
+    addLog(`✓ URL: https://${domain}/blogs/news/${data.article.handle}`, 'ok');
+
+    // Save to history
+    state.history.unshift({
+      title: state.article.title,
+      keywords: state.article.keywords,
+      date: new Date().toLocaleDateString(),
+      words: document.getElementById('meta-words').textContent,
+      status: state.publishMode === 'live' ? 'published' : 'draft',
+      shopifyId: data.article.id
+    });
+    saveHistory();
+    renderHistory();
+    updateStats();
+    notify('Published to Shopify! 🎉', 'success');
+  } catch(e) {
+    addLog('✗ Error: ' + e.message, 'err');
+    notify('Publish failed: ' + e.message, 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function copyHTMLToClipboard() {
+  if (!state.article?.html) { notify('No article HTML', 'error'); return; }
+  navigator.clipboard.writeText(state.article.html)
+    .then(() => notify('HTML copied to clipboard!', 'success'))
+    .catch(() => notify('Copy failed — use Ctrl+A in article view', 'error'));
+}
+
+
+// =========================================================
+// FEISHU API
+// =========================================================
+const FEISHU_BASE = () => state.feishu.version === 'lark'
+  ? 'https://open.larksuite.com/open-apis'
+  : 'https://open.feishu.cn/open-apis';
+
+function saveFeishuSettings() {
+  state.feishu.appId = document.getElementById('feishu-app-id').value;
+  state.feishu.appSecret = document.getElementById('feishu-app-secret').value;
+  state.feishu.biTableToken = document.getElementById('feishu-bitable-token').value;
+  state.feishu.version = document.getElementById('feishu-version').value;
+  state.feishu.fields.compTitle = document.getElementById('field-comp-title').value;
+  state.feishu.fields.compKw = document.getElementById('field-comp-kw').value;
+  state.feishu.fields.compSummary = document.getElementById('field-comp-summary').value;
+  state.feishu.fields.brandType = document.getElementById('field-brand-type').value;
+  state.feishu.fields.brandContent = document.getElementById('field-brand-content').value;
+  state.feishu.fields.histTitle = document.getElementById('field-hist-title').value;
+  try {
+    sessionStorage.setItem('blogbot_feishu', JSON.stringify({
+      ...state.feishu, tenantToken: '', appId: '', appSecret: ''
+    }));
+    sessionStorage.setItem('blogbot_feishu_keys', JSON.stringify({
+      id: state.feishu.appId,
+      sec: state.feishu.appSecret,
+      tok: state.feishu.biTableToken
+    }));
+  } catch(e) {}
+}
+
+function loadFeishuSettings() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('blogbot_feishu') || '{}');
+    const k = JSON.parse(sessionStorage.getItem('blogbot_feishu_keys') || '{}');
+    Object.assign(state.feishu, s);
+    if (k.id) state.feishu.appId = k.id;
+    if (k.sec) state.feishu.appSecret = k.sec;
+    if (k.tok) state.feishu.biTableToken = k.tok;
+  } catch(e) {}
+  // Apply to UI
+  const f = state.feishu;
+  document.getElementById('feishu-app-id').value = f.appId || '';
+  document.getElementById('feishu-app-secret').value = f.appSecret || '';
+  document.getElementById('feishu-bitable-token').value = f.biTableToken || '';
+  document.getElementById('feishu-version').value = f.version || 'feishu';
+  document.getElementById('field-comp-title').value = f.fields.compTitle || '文章标题';
+  document.getElementById('field-comp-kw').value = f.fields.compKw || '核心关键词';
+  document.getElementById('field-comp-summary').value = f.fields.compSummary || '内容摘要';
+  document.getElementById('field-brand-type').value = f.fields.brandType || '类型';
+  document.getElementById('field-brand-content').value = f.fields.brandContent || '内容';
+  document.getElementById('field-hist-title').value = f.fields.histTitle || '标题';
+  if (f.tableCompetitor) {
+    document.getElementById('ftc-competitor-id').textContent = f.tableCompetitor;
+    document.getElementById('ftc-competitor-id').closest('.feishu-table-card').classList.add('linked');
+  }
+  if (f.tableBrand) {
+    document.getElementById('ftc-brand-id').textContent = f.tableBrand;
+    document.getElementById('ftc-brand-id').closest('.feishu-table-card').classList.add('linked');
+  }
+  if (f.tableHistory) {
+    document.getElementById('ftc-history-id').textContent = f.tableHistory;
+    document.getElementById('ftc-history-id').closest('.feishu-table-card').classList.add('linked');
+  }
+}
+
+async function getFeishuToken() {
+  if (state.feishu.tenantToken && Date.now() < state.feishu.tokenExpiry) {
+    return state.feishu.tenantToken;
+  }
+  const resp = await fetch(`${FEISHU_BASE()}/auth/v3/tenant_access_token/internal`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ app_id: state.feishu.appId, app_secret: state.feishu.appSecret })
+  });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error('飞书认证失败: ' + data.msg);
+  state.feishu.tenantToken = data.tenant_access_token;
+  state.feishu.tokenExpiry = Date.now() + (data.expire - 60) * 1000;
+  return state.feishu.tenantToken;
+}
+
+async function testFeishuConnection() {
+  const btn = document.getElementById('feishu-test-btn');
+  const spinner = document.getElementById('feishu-test-spinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  setFeishuStatus('syncing', '连接中…');
+  runLog('测试飞书连接…', 'info');
+  try {
+    if (!state.feishu.appId || !state.feishu.appSecret) throw new Error('请先填入 App ID 和 App Secret');
+    const token = await getFeishuToken();
+    runLog('✓ 获取 Token 成功', 'ok');
+    if (state.feishu.biTableToken) {
+      // List tables
+      const resp = await fetch(`${FEISHU_BASE()}/bitable/v1/apps/${state.feishu.biTableToken}/tables`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await resp.json();
+      if (data.code !== 0) throw new Error('读取多维表格失败: ' + data.msg);
+      const tables = data.data.items || [];
+      runLog(`✓ 发现 ${tables.length} 个数据表`, 'ok');
+      renderFeishuTablePicker(tables);
+    }
+    setFeishuStatus('connected', '飞书已连接');
+    notify('飞书连接成功！', 'success');
+  } catch(e) {
+    setFeishuStatus('error', '连接失败');
+    runLog('✗ ' + e.message, 'err');
+    notify('连接失败: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function renderFeishuTablePicker(tables) {
+  const grid = document.getElementById('feishu-tables-grid');
+  const roles = [
+    { key: 'tableCompetitor', icon: '📊', name: '竞品内容库', idEl: 'ftc-competitor-id' },
+    { key: 'tableBrand', icon: '🏷️', name: '品牌知识库', idEl: 'ftc-brand-id' },
+    { key: 'tableHistory', icon: '📝', name: '已发文章记录', idEl: 'ftc-history-id' }
+  ];
+  // Show modal-like selector for each table
+  tables.forEach(t => runLog(`  表格: ${t.name} (${t.table_id})`, 'info'));
+  // Auto-match by name keywords
+  tables.forEach(t => {
+    const n = (t.name || '').toLowerCase();
+    if (n.includes('竞品') || n.includes('competitor')) {
+      state.feishu.tableCompetitor = t.table_id;
+      document.getElementById('ftc-competitor-id').textContent = t.name + ' · ' + t.table_id;
+      document.getElementById('ftc-competitor-id').closest('.feishu-table-card').classList.add('linked');
+    } else if (n.includes('品牌') || n.includes('brand')) {
+      state.feishu.tableBrand = t.table_id;
+      document.getElementById('ftc-brand-id').textContent = t.name + ' · ' + t.table_id;
+      document.getElementById('ftc-brand-id').closest('.feishu-table-card').classList.add('linked');
+    } else if (n.includes('记录') || n.includes('history') || n.includes('发布') || n.includes('article')) {
+      state.feishu.tableHistory = t.table_id;
+      document.getElementById('ftc-history-id').textContent = t.name + ' · ' + t.table_id;
+      document.getElementById('ftc-history-id').closest('.feishu-table-card').classList.add('linked');
+    }
+  });
+  saveFeishuSettings();
+  runLog('✓ 表格自动匹配完成（请检查上方绑定结果）', 'ok');
+}
+
+async function fetchFeishuTable(tableId) {
+  const token = await getFeishuToken();
+  const resp = await fetch(
+    `${FEISHU_BASE()}/bitable/v1/apps/${state.feishu.biTableToken}/tables/${tableId}/records?page_size=500`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error(`读取表格 ${tableId} 失败: ` + data.msg);
+  return (data.data.items || []).map(r => r.fields);
+}
+
+async function writeFeishuRecord(tableId, fields) {
+  const token = await getFeishuToken();
+  const resp = await fetch(
+    `${FEISHU_BASE()}/bitable/v1/apps/${state.feishu.biTableToken}/tables/${tableId}/records`,
+    {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields })
+    }
+  );
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error('写入飞书记录失败: ' + data.msg);
+  return data.data.record;
+}
+
+async function syncFromFeishu() {
+  const spinner = document.getElementById('sync-spinner');
+  spinner.style.display = 'inline-block';
+  setFeishuStatus('syncing', '同步中…');
+  runLog('开始从飞书同步数据…', 'info');
+  try {
+    const f = state.feishu;
+    if (!f.appId || !f.appSecret || !f.biTableToken) throw new Error('请先填写飞书配置并测试连接');
+
+    // Fetch competitor data
+    if (f.tableCompetitor) {
+      const rows = await fetchFeishuTable(f.tableCompetitor);
+      state.feishuData.competitors = rows.map(r => ({
+        title: getFieldText(r, f.fields.compTitle),
+        keyword: getFieldText(r, f.fields.compKw),
+        summary: getFieldText(r, f.fields.compSummary)
+      })).filter(r => r.title);
+      runLog(`✓ 竞品内容库: ${state.feishuData.competitors.length} 条`, 'ok');
+    }
+
+    // Fetch brand info
+    if (f.tableBrand) {
+      const rows = await fetchFeishuTable(f.tableBrand);
+      state.feishuData.brandInfo = rows.map(r => ({
+        type: getFieldText(r, f.fields.brandType),
+        content: getFieldText(r, f.fields.brandContent)
+      })).filter(r => r.content);
+      runLog(`✓ 品牌知识库: ${state.feishuData.brandInfo.length} 条`, 'ok');
+    }
+
+    // Fetch published titles to avoid duplicates
+    if (f.tableHistory) {
+      const rows = await fetchFeishuTable(f.tableHistory);
+      state.feishuData.publishedTitles = rows
+        .map(r => getFieldText(r, f.fields.histTitle))
+        .filter(Boolean);
+      // Merge into local history
+      state.feishuData.publishedTitles.forEach(title => {
+        if (!state.history.find(h => h.title === title)) {
+          state.history.push({ title, status: 'published', date: '飞书导入', keywords: [] });
+        }
+      });
+      saveHistory();
+      runLog(`✓ 已发文章记录: ${state.feishuData.publishedTitles.length} 条（已合并到历史）`, 'ok');
+    }
+
+    setFeishuStatus('connected', `飞书已同步 · ${new Date().toLocaleTimeString()}`);
+    updateStats();
+    notify('飞书数据同步完成！', 'success');
+  } catch(e) {
+    setFeishuStatus('error', '同步失败');
+    runLog('✗ ' + e.message, 'err');
+    notify('同步失败: ' + e.message, 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+// Helper: extract text value from feishu field (handles text array or plain string)
+function getFieldText(record, fieldName) {
+  const val = record[fieldName];
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (Array.isArray(val)) return val.map(v => v.text || v).join('');
+  if (typeof val === 'object' && val.text) return val.text;
+  return String(val);
+}
+
+async function writeBackToFeishu(articleData) {
+  if (!state.feishu.tableHistory) { runLog('⚠ 未绑定记录表，跳过回写', 'warn'); return; }
+  try {
+    await writeFeishuRecord(state.feishu.tableHistory, {
+      [state.feishu.fields.histTitle]: articleData.title,
+      '主关键词': articleData.primaryKeyword || '',
+      '状态': articleData.status || 'draft',
+      '发布日期': new Date().toISOString().split('T')[0],
+      'Shopify ID': String(articleData.shopifyId || ''),
+      '字数': String(articleData.words || '')
+    });
+    runLog('✓ 已回写到飞书记录表', 'ok');
+  } catch(e) {
+    runLog('⚠ 回写飞书失败: ' + e.message, 'warn');
+  }
+}
+
+function setFeishuStatus(status, text) {
+  const dot = document.getElementById('feishu-dot');
+  const statusText = document.getElementById('feishu-status-text');
+  dot.className = 'feishu-dot ' + status;
+  statusText.textContent = text;
+}
+
+// =========================================================
+// SCHEDULER
+// =========================================================
+function saveScheduler() {
+  try {
+    sessionStorage.setItem('blogbot_scheduler', JSON.stringify({
+      time: document.getElementById('schedule-time').value,
+      freq: document.getElementById('schedule-freq').value,
+      publish: document.getElementById('schedule-publish').value,
+      active: state.scheduler.active
+    }));
+  } catch(e) {}
+}
+
+function loadScheduler() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('blogbot_scheduler') || '{}');
+    if (s.time) document.getElementById('schedule-time').value = s.time;
+    if (s.freq) document.getElementById('schedule-freq').value = s.freq;
+    if (s.publish) document.getElementById('schedule-publish').value = s.publish;
+    if (s.active) activateScheduler();
+  } catch(e) {}
+}
+
+function activateScheduler() {
+  state.scheduler.active = true;
+  document.getElementById('scheduler-toggle-text').textContent = '定时器运行中…';
+  document.getElementById('countdown-box').style.display = 'flex';
+  document.getElementById('scheduler-countdown').style.display = 'block';
+  saveScheduler();
+  updateCountdown();
+  if (state.scheduler.intervalId) clearInterval(state.scheduler.intervalId);
+  state.scheduler.intervalId = setInterval(checkSchedule, 30000); // check every 30s
+  checkSchedule();
+  runLog('✓ 定时器已启动', 'ok');
+  notify('定时器已启动！', 'success');
+}
+
+function deactivateScheduler() {
+  state.scheduler.active = false;
+  if (state.scheduler.intervalId) clearInterval(state.scheduler.intervalId);
+  document.getElementById('scheduler-toggle-text').textContent = '启动定时器';
+  document.getElementById('countdown-box').style.display = 'none';
+  document.getElementById('scheduler-countdown').style.display = 'none';
+  saveScheduler();
+  runLog('定时器已停止', 'warn');
+}
+
+function getNextRunTime() {
+  const timeStr = document.getElementById('schedule-time').value || '09:00';
+  const freq = document.getElementById('schedule-freq').value || 'daily';
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  // If weekdays, skip weekend
+  if (freq === 'weekdays') {
+    while (target.getDay() === 0 || target.getDay() === 6) {
+      target.setDate(target.getDate() + 1);
+    }
+  } else if (freq === 'weekly') {
+    // Next Monday
+    while (target.getDay() !== 1) target.setDate(target.getDate() + 1);
+  }
+  return target;
+}
+
+function updateCountdown() {
+  if (!state.scheduler.active) return;
+  const next = getNextRunTime();
+  const diff = next - Date.now();
+  if (diff < 0) { updateCountdown(); return; }
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  const val = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const el = document.getElementById('countdown-val');
+  const el2 = document.getElementById('scheduler-countdown');
+  const nextEl = document.getElementById('next-run-time');
+  if (el) el.textContent = val;
+  if (el2) el2.textContent = '⏰ ' + val;
+  if (nextEl) nextEl.textContent = next.toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  setTimeout(updateCountdown, 1000);
+}
+
+function checkSchedule() {
+  if (!state.scheduler.active) return;
+  const timeStr = document.getElementById('schedule-time').value || '09:00';
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const freq = document.getElementById('schedule-freq').value || 'daily';
+  const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+  const isMonday = now.getDay() === 1;
+  const timeMatch = now.getHours() === h && now.getMinutes() === m;
+  const freqMatch = freq === 'daily' || (freq === 'weekdays' && isWeekday) || (freq === 'weekly' && isMonday);
+  if (timeMatch && freqMatch) {
+    const lastRun = sessionStorage.getItem('blogbot_last_auto_run');
+    const todayKey = now.toDateString() + '-' + timeStr;
+    if (lastRun !== todayKey) {
+      sessionStorage.setItem('blogbot_last_auto_run', todayKey);
+      runLog(`⏰ 定时触发: ${now.toLocaleTimeString()}`, 'info');
+      runFullAutoWorkflow();
+    }
+  }
+}
+
+function toggleAutoMode(mode, el) {
+  el.classList.toggle('selected');
+}
+
+// =========================================================
+// FULL AUTO WORKFLOW (Feishu sync → topic → outline → article → images → publish)
+// =========================================================
+async function runFullAutoWorkflow() {
+  runLog('══════════ 开始执行完整工作流 ══════════', 'info');
+  runLog(`触发时间: ${new Date().toLocaleString()}`, 'info');
+
+  try {
+    // Step 1: Sync from Feishu if configured
+    if (state.feishu.appId && state.feishu.biTableToken) {
+      runLog('步骤 1/5: 从飞书同步数据…', 'info');
+      await syncFromFeishu();
+    } else {
+      runLog('步骤 1/5: 跳过飞书同步（未配置）', 'warn');
+    }
+
+    // Step 2: Generate topics using Feishu data
+    runLog('步骤 2/5: 生成选题…', 'info');
+    showTab('topics');
+    await generateTopicsWithFeishuData();
+
+    // Auto-select first topic
+    if (state.topics.length > 0) {
+      selectTopic(0);
+      runLog(`✓ 自动选题: "${state.topics[0].title}"`, 'ok');
+    } else {
+      throw new Error('无法生成选题');
+    }
+
+    // Step 3: Generate outline
+    runLog('步骤 3/5: 生成大纲…', 'info');
+    await approveTopicAndOutline();
+    runLog('✓ 大纲生成完成', 'ok');
+
+    // Step 4: Write article
+    runLog('步骤 4/5: 写文章 + 生图…', 'info');
+    await approveOutlineAndWrite();
+    runLog('✓ 文章生成完成', 'ok');
+
+    // Step 5: Publish to Shopify as draft
+    const publishMode = document.getElementById('schedule-publish')?.value || 'draft';
+    state.publishMode = publishMode;
+    runLog(`步骤 5/5: 推送到 Shopify (${publishMode})…`, 'info');
+
+    const blogId = document.getElementById('pub-blog-id')?.value;
+    if (state.settings.shopifyToken && state.settings.shopifyDomain && blogId) {
+      await publishToShopify();
+      // Write back to Feishu
+      if (state.article && state.feishu.tableHistory) {
+        await writeBackToFeishu({
+          title: state.article.title,
+          primaryKeyword: state.article.primaryKeyword,
+          status: publishMode,
+          words: document.getElementById('meta-words')?.textContent
+        });
+      }
+    } else {
+      runLog('⚠ Shopify 未配置或缺少 Blog ID，跳过发布', 'warn');
+    }
+
+    runLog('══════════ 工作流完成 ✓ ══════════', 'ok');
+    notify('自动工作流完成！🎉', 'success');
+  } catch(e) {
+    runLog('✗ 工作流错误: ' + e.message, 'err');
+    notify('工作流失败: ' + e.message, 'error');
+  }
+}
+
+// Topic generation enriched with Feishu data
+async function generateTopicsWithFeishuData() {
+  const btn = document.getElementById('gen-topics-btn');
+  const spinner = document.getElementById('topics-spinner');
+  if (btn) btn.disabled = true;
+  if (spinner) spinner.style.display = 'inline-block';
+  document.getElementById('topics-empty').style.display = 'none';
+  document.getElementById('topics-grid').style.display = 'none';
+  document.getElementById('topic-action-bar').style.display = 'none';
+
+  const usedTopics = [
+    ...state.history.map(h => h.title),
+    ...state.feishuData.publishedTitles
+  ];
+  const keywords = state.settings.seedKeywords.join(', ') || 'relevant industry keywords';
+  const brand = state.settings.brandDesc || 'an e-commerce brand';
+
+  // Build rich context from Feishu data
+  const competitorContext = state.feishuData.competitors.length > 0
+    ? '\n\nCompetitor article examples from database:\n' +
+      state.feishuData.competitors.slice(0, 20).map(c =>
+        `- "${c.title}" (keyword: ${c.keyword})`).join('\n')
+    : `\n\nCompetitor blogs: ${state.settings.competitorURLs.join(', ') || 'various competitors'}`;
+
+  const brandContext = state.feishuData.brandInfo.length > 0
+    ? '\n\nBrand knowledge base:\n' +
+      state.feishuData.brandInfo.slice(0, 10).map(b => `[${b.type}] ${b.content}`).join('\n')
+    : '';
+
+  const system = `You are an expert SEO content strategist for a Shopify e-commerce brand.
+Generate high-potential blog topics based on competitor analysis and SEO best practices.
+Always respond with valid JSON only, no markdown, no explanation.`;
+
+  const user = `Brand context: ${brand}${brandContext}${competitorContext}
+Seed keywords: ${keywords}
+Already written topics (EXCLUDE these): ${usedTopics.join('; ') || 'none yet'}
+
+Generate 5 unique blog topic suggestions with varied content types.
+
+Return JSON array:
+[
+  {
+    "title": "Full article title with target keyword",
+    "primaryKeyword": "main keyword phrase",
+    "secondaryKeywords": ["kw2", "kw3", "kw4"],
+    "contentType": "How-To Guide",
+    "estimatedSearchVolume": "High/Medium/Low",
+    "difficulty": "Easy/Medium/Hard",
+    "rationale": "2 sentence explanation of SEO and conversion value"
+  }
+]`;
+
+  try {
+    const result = await callClaude(system, user);
+    const clean = result.replace(/```json|```/g, '').trim();
+    state.topics = JSON.parse(clean);
+    renderTopics();
+    notify('5 topics generated!', 'success');
+  } catch(e) {
+    notify('Error: ' + e.message, 'error');
+    document.getElementById('topics-empty').style.display = 'block';
+    throw e;
+  } finally {
+    if (btn) btn.disabled = false;
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
+function runLog(msg, type = '') {
+  const log = document.getElementById('run-log');
+  if (!log) return;
+  const line = document.createElement('div');
+  line.className = 'run-log-line ' + type;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+// =========================================================
+// ORIGINAL WORKFLOW (kept for manual step-by-step use)
+// =========================================================
+async function generateTopics() {
+  return generateTopicsWithFeishuData();
+}
+
+// =========================================================
+// NOTIFICATION
+// =========================================================
+function notify(msg, type = 'success') {
+  const el = document.getElementById('notif');
+  const icon = document.getElementById('notif-icon');
+  const text = document.getElementById('notif-text');
+  icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+  text.textContent = msg;
+  el.className = 'notif show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Tab intercept for publish
+document.querySelectorAll('.tab').forEach(t => {
+  const orig = t.getAttribute('onclick');
+  t.addEventListener('click', () => {
+    if (orig && orig.includes("'publish'")) {
+      setTimeout(() => {
+        if (state.article) showPublishPanel();
+      }, 0);
+    }
+  });
+});
+</script>
+</body>
+</html>
